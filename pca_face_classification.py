@@ -266,3 +266,53 @@ for n_components in component_list:
                                        ignore_index=True)
 
 results_df
+
+from sklearn.neighbors import KNeighborsClassifier
+
+component_list = [50, 75, 100, 125, 150]  # Adjust as needed
+
+# Flatten the training data to be 2D (batch_size, num_features)
+X_train_flattened = X_train.reshape(X_train.shape[0], -1)
+X_validation_flattened = X_validation.reshape(X_validation.shape[0], -1)
+X_test_flattened = X_test.reshape(X_test.shape[0], -1)
+
+
+# Define an empty DataFrame to store results
+results_df = pd.DataFrame(columns=['Components', 'Classifier', 'Validation Accuracy', 'Test Accuracy'])
+
+# Iterate over components and perform KNN
+for n_components in component_list:
+    for k in range(1, 6):  # Try different values of k (number of neighbors)
+        # Perform PCA on the training data
+        pca = PCA(n_components=n_components)
+
+        # Fit PCA on the training data
+        pca.fit(X_train_flattened)
+
+        # Transform the data
+        X_train_pca = pca.transform(X_train_flattened)
+        X_validation_pca = pca.transform(X_validation_flattened)
+        X_test_pca = pca.transform(X_test_flattened)
+
+        # KNN on the reduced-dimensional data
+        clf = KNeighborsClassifier(n_neighbors=k)
+
+        # Train the classifier
+        clf.fit(X_train_pca, y_train)
+
+        # Evaluation on validation set
+        y_validation_pred = clf.predict(X_validation_pca)
+        validation_accuracy = accuracy_score(y_validation, y_validation_pred)
+
+        # Evaluation on test set
+        y_test_pred = clf.predict(X_test_pca)
+        test_accuracy = accuracy_score(y_test, y_test_pred)
+
+        # Append results to the DataFrame
+        results_df = results_df.append({'Components': n_components,
+                                        'Classifier': f'KNN (k={k})',
+                                        'Validation Accuracy': validation_accuracy,
+                                        'Test Accuracy': test_accuracy},
+                                       ignore_index=True)
+
+results_df
